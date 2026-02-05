@@ -27,10 +27,11 @@ export async function Clock() {
 
   return (
     <ErrorBoundary>
-      <section className="min-h-[calc(100vh-56px)] flex flex-col justify-center px-4 py-8" aria-label="Enshittification Clock">
-        <div className="max-w-4xl mx-auto w-full">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-3">
+      <section className="px-4" aria-label="Enshittification Clock">
+        {/* Hero section - fills viewport */}
+        <div className="min-h-[calc(100vh-56px)] flex flex-col py-8">
+          <div className="text-center mb-6">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">
               Enshittification Clock
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
@@ -38,7 +39,14 @@ export async function Clock() {
             </p>
           </div>
 
-          <ClockFace level={clockState.level} color={clockState.color} />
+          {/* Clock fills remaining space */}
+          <div className="flex-1 flex items-center justify-center">
+            <ClockFace level={clockState.level} color={clockState.color} />
+          </div>
+        </div>
+
+        {/* Below the fold */}
+        <div className="max-w-4xl mx-auto py-8">
           <ClockLegend position={clockState.position} color={clockState.color} />
 
           {/* Stats */}

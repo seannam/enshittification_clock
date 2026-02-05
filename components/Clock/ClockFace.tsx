@@ -19,10 +19,10 @@ export function ClockFace({ level, color }: ClockFaceProps) {
   const strokeColor = colorMap[color] || colorMap.green;
 
   return (
-    <div className="relative w-full max-w-md mx-auto" aria-label="Enshittification Clock">
+    <div className="relative w-full h-full max-w-2xl mx-auto flex items-center justify-center" aria-label="Enshittification Clock">
       <svg
         viewBox="0 0 200 200"
-        className="w-full h-full"
+        className="w-full h-full max-h-full aspect-square"
         role="img"
         aria-label={`Enshittification level: ${level} out of 100`}
       >

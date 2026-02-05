@@ -25,26 +25,33 @@ export function TimelineHorizontal({ events, viewMode }: TimelineHorizontalProps
   return <HorizontalUnified events={events} />;
 }
 
+// Card width: 288px (w-72), Gap: 16px (gap-4)
+// Line width = (n-1) * (cardWidth + gap) = (n-1) * 304px
+const CARD_WIDTH = 288;
+const GAP_WIDTH = 16;
+
 function HorizontalUnified({ events }: { events: EventWithService[] }) {
+  const lineWidth = (events.length - 1) * (CARD_WIDTH + GAP_WIDTH);
+
   return (
     <div className="overflow-x-auto pb-4">
-      <div className="inline-flex flex-col min-w-full">
-        {/* Timeline line at top */}
-        <div className="flex items-center px-4 py-2">
-          {events.map((event, index) => (
-            <div key={event.id} className="flex items-center">
-              <TimelineMarkerHorizontal
-                severity={event.severity}
-                isLast={index === events.length - 1}
-              />
-            </div>
-          ))}
-        </div>
-
-        {/* Event cards below */}
-        <div className="flex gap-4 px-4 pt-2">
+      <div className="px-4">
+        <div className="relative flex gap-4">
+          {/* Line spans from first dot center to last dot center */}
+          {events.length > 1 && (
+            <div
+              className="absolute left-[144px] top-[13px] h-0.5 bg-gray-200"
+              style={{ width: lineWidth }}
+              aria-hidden="true"
+            />
+          )}
           {events.map((event) => (
-            <div key={event.id} className="flex-shrink-0 w-72">
+            <div key={event.id} className="flex flex-col flex-shrink-0 w-72">
+              {/* Centered marker with top padding to prevent ring clipping */}
+              <div className="flex justify-center mb-2 pt-2">
+                <TimelineMarkerHorizontal severity={event.severity} />
+              </div>
+              {/* Event card */}
               <TimelineEventCard event={event} showPlatform={true} />
             </div>
           ))}
@@ -83,23 +90,23 @@ function HorizontalByPlatform({ events }: { events: EventWithService[] }) {
 
             {/* Horizontal scroll for platform events */}
             <div className="overflow-x-auto pb-2">
-              <div className="inline-flex flex-col min-w-full">
-                {/* Timeline line */}
-                <div className="flex items-center px-4 py-2">
-                  {platformEvents.map((event, index) => (
-                    <div key={event.id} className="flex items-center">
-                      <TimelineMarkerHorizontal
-                        severity={event.severity}
-                        isLast={index === platformEvents.length - 1}
-                      />
-                    </div>
-                  ))}
-                </div>
-
-                {/* Event cards */}
-                <div className="flex gap-4 px-4 pt-2">
+              <div className="px-4">
+                <div className="relative flex gap-4">
+                  {/* Line spans from first dot center to last dot center */}
+                  {platformEvents.length > 1 && (
+                    <div
+                      className="absolute left-[144px] top-[13px] h-0.5 bg-gray-200"
+                      style={{ width: (platformEvents.length - 1) * (CARD_WIDTH + GAP_WIDTH) }}
+                      aria-hidden="true"
+                    />
+                  )}
                   {platformEvents.map((event) => (
-                    <div key={event.id} className="flex-shrink-0 w-72">
+                    <div key={event.id} className="flex flex-col flex-shrink-0 w-72">
+                      {/* Centered marker with top padding to prevent ring clipping */}
+                      <div className="flex justify-center mb-2 pt-2">
+                        <TimelineMarkerHorizontal severity={event.severity} />
+                      </div>
+                      {/* Event card */}
                       <TimelineEventCard event={event} showPlatform={false} />
                     </div>
                   ))}
