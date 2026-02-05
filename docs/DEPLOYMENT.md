@@ -2,6 +2,8 @@
 
 This app is deployed on a self-hosted server using Dokploy with Cloudflare Zero Trust for access control.
 
+**Important:** This app must be deployed as a **Compose** project in Dokploy, not an Application. Dokploy Application deployments ignore the Dockerfile's ENTRYPOINT, which breaks automatic migrations.
+
 ## Architecture Overview
 
 ```
@@ -136,9 +138,21 @@ In Dokploy, configure domains for each service:
 | kong | `db-eclock.snam.io` | 8000 |
 | studio | `supabase-eclock.snam.io` | 3000 |
 
-## App Configuration
+## App Configuration (Dokploy Compose)
+
+### Deployment Type
+
+**You must use Compose deployment in Dokploy:**
+
+1. In Dokploy, create a new **Compose** project (not Application)
+2. Point it to your GitHub repo
+3. Dokploy will use `docker-compose.yml` for deployment
+
+**Why Compose?** Dokploy Application deployments build from the Dockerfile but ignore ENTRYPOINT when creating the service. Only Compose deployments respect the full docker-compose.yml configuration including entrypoint and networks.
 
 ### Environment Variables
+
+Set these in Dokploy's Compose environment settings:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://db-eclock.snam.io
@@ -146,7 +160,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
 # For internal migrations (Docker network)
-DATABASE_URL=postgresql://postgres:your-password@supabase-db:5432/postgres
+DATABASE_URL=postgresql://postgres:your-password@enshittification-clock-supabase-e9ew2d-supabase-db:5432/postgres
 ```
 
 ## Database Migrations
@@ -165,23 +179,31 @@ Migrations run automatically at container startup via `docker-entrypoint.sh`. Th
 
 ### Docker Network Configuration
 
-The app container must be on the same Docker network as Supabase to reach PostgreSQL internally.
+The app connects to the Supabase network via `docker-compose.yml`:
 
-**In Dokploy:**
+```yaml
+networks:
+  supabase:
+    name: enshittification-clock-supabase-e9ew2d
+    external: true
+```
 
-1. Find your Supabase stack's network name (e.g., `supabase_default`)
-2. Add your app to that network in the app's Docker settings
-3. Set `DATABASE_URL` with the internal PostgreSQL hostname
-
-**Finding the internal hostname:**
+**Finding your Supabase network name:**
 
 ```bash
 # SSH into your server and run:
-docker network ls
-docker network inspect <supabase-network-name>
+docker network ls | grep supabase
 ```
 
-Look for the PostgreSQL container's name (e.g., `supabase-db`, `supabase_db_1`).
+The network name follows the pattern: `{dokploy-project-name}-supabase-{id}`
+
+**Finding the PostgreSQL container hostname:**
+
+```bash
+docker ps | grep supabase-db
+```
+
+The container name is the hostname (e.g., `enshittification-clock-supabase-e9ew2d-supabase-db`).
 
 ### Migration Files
 
@@ -197,6 +219,26 @@ supabase/migrations/
 
 ## Troubleshooting
 
+### Migrations don't run at startup
+
+**Symptom:** Container starts directly with Next.js, no "Running database migrations..." in logs.
+
+**Causes:**
+1. Using Dokploy Application deployment instead of Compose
+2. Entrypoint not being executed
+
+**Solution:**
+1. Delete the Application deployment in Dokploy
+2. Create a new **Compose** project pointing to the same repo
+3. Set environment variables in the Compose project
+4. Redeploy
+
+**Verify entrypoint is running:**
+```bash
+docker exec <container> cat /proc/1/cmdline | tr '\0' ' '
+```
+Should show `./docker-entrypoint.sh`, not `node server.js`.
+
 ### Migrations fail to connect
 
 **Symptom:** Container logs show `psql: could not connect to server`
@@ -208,8 +250,8 @@ supabase/migrations/
 
 **Solution:**
 1. Verify the app is on the Supabase Docker network
-2. Check the PostgreSQL container name: `docker ps | grep postgres`
-3. Test connectivity: `docker exec <app-container> ping supabase-db`
+2. Check the PostgreSQL container name: `docker ps | grep supabase-db`
+3. Test connectivity: `docker exec <app-container> psql "$DATABASE_URL" -c "SELECT 1"`
 
 ### App gets HTML instead of JSON from Supabase
 
