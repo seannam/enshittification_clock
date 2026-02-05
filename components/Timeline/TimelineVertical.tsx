@@ -28,23 +28,30 @@ export function TimelineVertical({ events, viewMode }: TimelineVerticalProps) {
 
 function TimelineUnified({ events }: { events: EventWithService[] }) {
   return (
-    <div className="space-y-0">
-      {events.map((event, index) => (
-        <div key={event.id} className="flex gap-4">
-          {/* Timeline line and marker */}
-          <div className="flex-shrink-0 w-6">
-            <TimelineMarker
-              severity={event.severity}
-              isLast={index === events.length - 1}
-            />
-          </div>
+    <div className="relative">
+      {/* Line from first dot center to last dot center */}
+      {events.length > 1 && (
+        <div
+          className="absolute left-[11px] top-[6px] bottom-[6px] w-0.5 bg-gray-200"
+          aria-hidden="true"
+        />
+      )}
 
-          {/* Event card */}
-          <div className="flex-1 pb-6">
-            <TimelineEventCard event={event} showPlatform={true} />
+      <div className="space-y-0">
+        {events.map((event, index) => (
+          <div key={event.id} className="flex gap-4 items-center relative">
+            {/* Marker centered with card */}
+            <div className="flex-shrink-0 w-6 flex justify-center">
+              <TimelineMarker severity={event.severity} />
+            </div>
+
+            {/* Event card */}
+            <div className={`flex-1 ${index < events.length - 1 ? 'pb-6' : ''}`}>
+              <TimelineEventCard event={event} showPlatform={true} />
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
@@ -65,23 +72,30 @@ function TimelineByPlatform({ events }: { events: EventWithService[] }) {
             platformName={platformInfo.name}
             eventCount={platformInfo.eventCount}
           >
-            <div className="space-y-0">
-              {platformEvents.map((event, index) => (
-                <div key={event.id} className="flex gap-4">
-                  {/* Timeline line and marker */}
-                  <div className="flex-shrink-0 w-6">
-                    <TimelineMarker
-                      severity={event.severity}
-                      isLast={index === platformEvents.length - 1}
-                    />
-                  </div>
+            <div className="relative">
+              {/* Line from first dot center to last dot center */}
+              {platformEvents.length > 1 && (
+                <div
+                  className="absolute left-[11px] top-[6px] bottom-[6px] w-0.5 bg-gray-200"
+                  aria-hidden="true"
+                />
+              )}
 
-                  {/* Event card */}
-                  <div className="flex-1 pb-6">
-                    <TimelineEventCard event={event} showPlatform={false} />
+              <div className="space-y-0">
+                {platformEvents.map((event, index) => (
+                  <div key={event.id} className="flex gap-4 items-center relative">
+                    {/* Marker centered with card */}
+                    <div className="flex-shrink-0 w-6 flex justify-center">
+                      <TimelineMarker severity={event.severity} />
+                    </div>
+
+                    {/* Event card */}
+                    <div className={`flex-1 ${index < platformEvents.length - 1 ? 'pb-6' : ''}`}>
+                      <TimelineEventCard event={event} showPlatform={false} />
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </PlatformGroup>
         );
