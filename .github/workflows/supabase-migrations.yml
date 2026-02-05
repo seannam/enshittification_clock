@@ -1,0 +1,34 @@
+name: Deploy Supabase Migrations
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'supabase/migrations/**'
+  workflow_dispatch:
+
+concurrency:
+  group: supabase-migrations
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy Migrations
+    runs-on: ubuntu-latest
+    environment: Production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Validate migrations (dry run)
+        run: supabase db push --db-url "${{ secrets.DATABASE_URL }}" --dry-run
+
+      - name: Push migrations to production
+        run: supabase db push --db-url "${{ secrets.DATABASE_URL }}"
