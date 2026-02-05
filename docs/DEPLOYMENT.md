@@ -144,9 +144,72 @@ In Dokploy, configure domains for each service:
 NEXT_PUBLIC_SUPABASE_URL=https://db-eclock.snam.io
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# For internal migrations (Docker network)
+DATABASE_URL=postgresql://postgres:your-password@supabase-db:5432/postgres
 ```
 
+## Database Migrations
+
+Migrations run automatically at container startup via `docker-entrypoint.sh`. This approach:
+- Keeps PostgreSQL internal (not exposed to internet)
+- Runs migrations before the app starts
+- Uses Docker's internal networking
+
+### How It Works
+
+1. Container starts with `docker-entrypoint.sh`
+2. Script checks for `DATABASE_URL` environment variable
+3. Applies all `.sql` files from `/app/migrations/` using `psql`
+4. Starts the Next.js server
+
+### Docker Network Configuration
+
+The app container must be on the same Docker network as Supabase to reach PostgreSQL internally.
+
+**In Dokploy:**
+
+1. Find your Supabase stack's network name (e.g., `supabase_default`)
+2. Add your app to that network in the app's Docker settings
+3. Set `DATABASE_URL` with the internal PostgreSQL hostname
+
+**Finding the internal hostname:**
+
+```bash
+# SSH into your server and run:
+docker network ls
+docker network inspect <supabase-network-name>
+```
+
+Look for the PostgreSQL container's name (e.g., `supabase-db`, `supabase_db_1`).
+
+### Migration Files
+
+SQL migrations are stored in `supabase/migrations/` and applied in alphabetical order:
+
+```
+supabase/migrations/
+  001_initial_schema.sql
+  002_add_event_type.sql
+```
+
+**Note:** Migrations should be idempotent (safe to run multiple times). Use `IF NOT EXISTS` for CREATE statements.
+
 ## Troubleshooting
+
+### Migrations fail to connect
+
+**Symptom:** Container logs show `psql: could not connect to server`
+
+**Causes:**
+1. App not on same Docker network as Supabase
+2. Wrong internal hostname in `DATABASE_URL`
+3. `DATABASE_URL` not set
+
+**Solution:**
+1. Verify the app is on the Supabase Docker network
+2. Check the PostgreSQL container name: `docker ps | grep postgres`
+3. Test connectivity: `docker exec <app-container> ping supabase-db`
 
 ### App gets HTML instead of JSON from Supabase
 

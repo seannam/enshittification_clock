@@ -11,4 +11,13 @@ services:
       - SUPABASE_SERVICE_ROLE_KEY
       - ANTHROPIC_API_KEY
       - ADMIN_API_KEY
+      - DATABASE_URL
+    networks:
+      - default
+      - supabase
     restart: unless-stopped
+
+networks:
+  supabase:
+    name: enshittification-clock-supabase-e9ew2d
+    external: true
