@@ -2,7 +2,7 @@ services:
   app:
     build: .
     ports:
-      - "${PORT:-3000}:3000"
+      - "${PORT:-3110}:3110"
     environment:
       - NODE_ENV=production
       - DOMAIN=${DOMAIN:-localhost}
