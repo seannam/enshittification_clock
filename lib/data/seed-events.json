@@ -1,0 +1,75 @@
+{
+  "services": [
+    {
+      "name": "Twitter / X",
+      "slug": "twitter",
+      "description": "Social media platform for microblogging and real-time updates",
+      "category": "Social Media",
+      "logo_url": "/icons/services/twitter.svg"
+    },
+    {
+      "name": "Reddit",
+      "slug": "reddit",
+      "description": "Community-driven discussion platform",
+      "category": "Social Media",
+      "logo_url": "/icons/services/reddit.svg"
+    },
+    {
+      "name": "YouTube",
+      "slug": "youtube",
+      "description": "Video sharing and streaming platform",
+      "category": "Streaming",
+      "logo_url": "/icons/services/youtube.svg"
+    }
+  ],
+  "events": [
+    {
+      "service_slug": "twitter",
+      "title": "Free API tier removed",
+      "description": "Twitter removed free API access, forcing developers and researchers to paid plans starting at $100/month, effectively killing many third-party tools and academic research projects.",
+      "event_date": "2023-02-01",
+      "severity": "major",
+      "source_url": "https://techcrunch.com/2023/02/02/twitter-to-end-free-access-to-its-api/"
+    },
+    {
+      "service_slug": "twitter",
+      "title": "Verification system changed to paid subscription",
+      "description": "Twitter replaced its verified badge system with a paid subscription model, removing credibility indicators and allowing anyone to purchase verification regardless of authenticity.",
+      "event_date": "2023-04-01",
+      "severity": "significant",
+      "source_url": "https://help.twitter.com/en/managing-your-account/about-twitter-verified-accounts"
+    },
+    {
+      "service_slug": "reddit",
+      "title": "Third-party app API pricing made prohibitively expensive",
+      "description": "Reddit announced API pricing that would cost popular third-party apps like Apollo over $20 million annually, effectively forcing them to shut down and pushing users to the official app.",
+      "event_date": "2023-06-01",
+      "severity": "critical",
+      "source_url": "https://www.reddit.com/r/apolloapp/comments/144f6xm/apollo_will_close_down_on_june_30th_reddits/"
+    },
+    {
+      "service_slug": "reddit",
+      "title": "Forced reopening of protesting subreddits",
+      "description": "Reddit forcibly reopened subreddits that had gone private in protest of API changes, removing moderators who refused to comply and demonstrating disregard for community governance.",
+      "event_date": "2023-06-15",
+      "severity": "major",
+      "source_url": "https://www.theverge.com/2023/6/15/23762868/reddit-protest-private-subreddit-threat"
+    },
+    {
+      "service_slug": "youtube",
+      "title": "Aggressive ad-blocker detection and restrictions",
+      "description": "YouTube began aggressively detecting and blocking users with ad-blockers, forcing them to disable ad-blocking extensions or purchase YouTube Premium to continue watching videos.",
+      "event_date": "2023-10-15",
+      "severity": "moderate",
+      "source_url": "https://www.theverge.com/2023/10/31/23940583/youtube-ad-blocker-crackdown-broadening"
+    },
+    {
+      "service_slug": "youtube",
+      "title": "Premium Lite tier discontinued in Europe",
+      "description": "YouTube discontinued its affordable Premium Lite subscription tier in Europe, forcing users to either watch ads or pay significantly more for full Premium.",
+      "event_date": "2023-10-01",
+      "severity": "minor",
+      "source_url": "https://support.google.com/youtube/answer/13715112"
+    }
+  ]
+}
