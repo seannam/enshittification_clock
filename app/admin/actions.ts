@@ -122,6 +122,7 @@ async function saveToDatabase(data: ResearchResponse): Promise<SaveResult> {
     description: event.description.slice(0, 2000),
     event_date: event.event_date,
     severity: event.severity,
+    event_type: event.event_type,
     source_url: event.source_url,
   }));
 

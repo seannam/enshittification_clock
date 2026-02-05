@@ -1,13 +1,14 @@
 // lib/ai/types.ts
 // Types for AI research responses
 
-import type { EventSeverity } from '../supabase/types';
+import type { EventSeverity, EventType } from '../supabase/types';
 
 export interface ResearchedEvent {
   title: string;
   description: string;
   event_date: string; // YYYY-MM-DD format
   severity: EventSeverity;
+  event_type: EventType;
   source_url: string | null;
   confidence: 'high' | 'medium' | 'low';
 }

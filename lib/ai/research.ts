@@ -3,9 +3,10 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import type { ResearchResponse, ResearchResult } from './types';
-import type { EventSeverity } from '../supabase/types';
+import type { EventSeverity, EventType } from '../supabase/types';
 
 const VALID_SEVERITIES: EventSeverity[] = ['minor', 'moderate', 'significant', 'major', 'critical'];
+const VALID_EVENT_TYPES: EventType[] = ['Paywall', 'Privacy', 'API', 'Ads', 'UX', 'Algorithm', 'Monetization', 'Terms', 'Other'];
 
 const RESEARCH_PROMPT = `You are a researcher documenting "enshittification" events for technology platforms and services.
 
@@ -35,6 +36,7 @@ Return your response as a JSON object with this exact structure:
       "description": "Detailed description of what happened and why it's enshittification (max 500 chars)",
       "event_date": "YYYY-MM-DD",
       "severity": "minor|moderate|significant|major|critical",
+      "event_type": "Paywall|Privacy|API|Ads|UX|Algorithm|Monetization|Terms|Other",
       "source_url": "https://... (news article or official announcement)",
       "confidence": "high|medium|low"
     }
@@ -47,6 +49,17 @@ Severity guidelines:
 - significant: Major feature removal, substantial price increases
 - major: Breaking changes affecting many users, severe restrictions
 - critical: Platform-defining negative changes, mass user exodus triggers
+
+Event type guidelines:
+- Paywall: Features moved behind paywalls, subscription required
+- Privacy: Data collection, tracking, privacy policy changes
+- API: API restrictions, rate limits, third-party app limitations
+- Ads: Increased advertising, intrusive ads, ad-related changes
+- UX: User experience degradation, confusing UI, dark patterns
+- Algorithm: Feed algorithm changes, engagement manipulation
+- Monetization: Price increases, creator payment cuts
+- Terms: Terms of service changes, content policy changes
+- Other: Anything that doesn't fit the above categories
 
 Only include events you are confident about. Prefer fewer high-quality events over many uncertain ones.
 Return 3-10 events, prioritizing the most significant ones.
@@ -119,12 +132,13 @@ export async function researchPlatform(platformName: string): Promise<ResearchRe
       };
     }
 
-    // Filter to only high/medium confidence events with valid severities
+    // Filter to only high/medium confidence events with valid severities and event types
     parsed.events = parsed.events
       .filter((event) => event.confidence !== 'low')
       .map((event) => ({
         ...event,
         severity: VALID_SEVERITIES.includes(event.severity) ? event.severity : 'moderate',
+        event_type: VALID_EVENT_TYPES.includes(event.event_type) ? event.event_type : 'Other',
       }));
 
     return {
