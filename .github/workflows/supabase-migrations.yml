@@ -27,8 +27,15 @@ jobs:
         with:
           version: latest
 
+      - name: Initialize Supabase project
+        run: supabase init --workdir . || true
+
       - name: Validate migrations (dry run)
-        run: supabase db push --db-url "${{ secrets.DATABASE_URL }}" --dry-run
+        run: supabase db push --db-url "$DATABASE_URL" --dry-run
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Push migrations to production
-        run: supabase db push --db-url "${{ secrets.DATABASE_URL }}"
+        run: supabase db push --db-url "$DATABASE_URL"
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
