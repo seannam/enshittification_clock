@@ -83,7 +83,18 @@ supabase/
   migrations/         # Database migrations
 tests/                # Test files
 specs/                # Feature specifications
+docs/                 # Documentation
 ```
+
+## Deployment
+
+This app is deployed using Dokploy with Cloudflare Zero Trust for access control. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for:
+
+- Cloudflare DNS and Zero Trust Access configuration
+- Domain naming conventions
+- Supabase self-hosted setup
+- GitHub webhook configuration
+- Troubleshooting guide
 
 ## License
 
