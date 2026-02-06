@@ -60,3 +60,18 @@ export const SEVERITY_COLORS: Record<EventSeverity, string> = {
   major: 'bg-clock-red text-white',
   critical: 'bg-clock-darkred text-white',
 };
+
+// AI Provider configuration (from database)
+export interface AIProviderRecord {
+  id: string;
+  name: string;
+  base_url: string;
+  api_key_encrypted: string;
+  model: string;
+  enabled: boolean;
+  priority: number;
+  max_tokens: number;
+  temperature: number;
+  created_at: string;
+  updated_at: string;
+}

@@ -1,14 +1,30 @@
 // lib/ai/research.ts
-// Claude API integration for researching enshittification events
+// AI integration for researching enshittification events with multi-provider support
 
 import Anthropic from '@anthropic-ai/sdk';
-import type { ResearchResponse, ResearchResult } from './types';
+import type {
+  ResearchResponse,
+  ResearchResult,
+  AIProviderConfig,
+  ProviderResearchResult,
+  CrossVerifiedResearchResult,
+} from './types';
 import type { EventSeverity, EventType } from '../supabase/types';
+import { loadProviderConfigs } from './config';
+import { createProvider } from './providers';
+import { crossVerifyResults, filterEventsForPlatform } from './verification';
 
 const VALID_SEVERITIES: EventSeverity[] = ['minor', 'moderate', 'significant', 'major', 'critical'];
 const VALID_EVENT_TYPES: EventType[] = ['Paywall', 'Privacy', 'API', 'Ads', 'UX', 'Algorithm', 'Monetization', 'Terms', 'Other'];
 
 const RESEARCH_PROMPT = `You are a researcher documenting "enshittification" events for technology platforms and services.
+
+CRITICAL INSTRUCTIONS:
+- You are researching ONLY the platform "{platform}"
+- DO NOT include events from parent companies, subsidiaries, or related platforms
+- For example: If researching "Facebook", do NOT include Instagram, WhatsApp, or Meta corporate events
+- If researching "Instagram", do NOT include Facebook or WhatsApp events
+- Each event MUST be specifically about {platform} itself
 
 Enshittification refers to the gradual degradation of a platform's value proposition over time, typically through:
 - Increased ads and monetization at the expense of user experience
@@ -22,6 +38,7 @@ For the platform "{platform}", research and return REAL, VERIFIABLE events that 
 1. Be a real event that actually happened (no speculation)
 2. Have a specific date (at least month and year)
 3. Have a source URL from reputable news sites, official announcements, or documented sources
+4. Be specifically about {platform} - NOT about related or parent company platforms
 
 Return your response as a JSON object with this exact structure:
 {
@@ -64,6 +81,9 @@ Event type guidelines:
 Only include events you are confident about. Prefer fewer high-quality events over many uncertain ones.
 Return 3-10 events, prioritizing the most significant ones.
 Events should be ordered from oldest to newest.
+
+VALIDATION: Before including any event, verify it mentions "{platform}" by name.
+REMINDER: Only include events specifically about {platform}. Exclude events about related platforms.
 
 IMPORTANT: Return ONLY the JSON object, no markdown formatting or explanation.`;
 
@@ -252,4 +272,137 @@ function isValidDate(dateString: string): boolean {
 
   const date = new Date(dateString);
   return !isNaN(date.getTime()) && date <= new Date();
+}
+
+// Query a single provider and return result
+async function queryProvider(
+  config: AIProviderConfig,
+  platformName: string
+): Promise<ProviderResearchResult> {
+  const startTime = Date.now();
+  const provider = createProvider(config);
+  const prompt = RESEARCH_PROMPT.replace(/\{platform\}/g, platformName);
+
+  try {
+    const responseText = await provider.query(prompt);
+
+    // Parse JSON response
+    let parsed: ResearchResponse;
+    try {
+      parsed = JSON.parse(responseText);
+    } catch {
+      return {
+        providerId: config.id,
+        providerName: config.name,
+        success: false,
+        error: {
+          type: 'parse_error',
+          message: 'Failed to parse JSON response',
+        },
+        durationMs: Date.now() - startTime,
+      };
+    }
+
+    // Validate response structure
+    const validationError = validateResearchResponse(parsed);
+    if (validationError) {
+      return {
+        providerId: config.id,
+        providerName: config.name,
+        success: false,
+        error: {
+          type: 'validation_error',
+          message: validationError,
+        },
+        durationMs: Date.now() - startTime,
+      };
+    }
+
+    // Filter and validate events
+    parsed.events = parsed.events
+      .filter((event) => event.confidence !== 'low')
+      .map((event) => ({
+        ...event,
+        severity: VALID_SEVERITIES.includes(event.severity) ? event.severity : 'moderate',
+        event_type: VALID_EVENT_TYPES.includes(event.event_type) ? event.event_type : 'Other',
+      }));
+
+    // Apply platform filtering
+    parsed.events = filterEventsForPlatform(parsed.events, platformName);
+
+    return {
+      providerId: config.id,
+      providerName: config.name,
+      success: true,
+      data: parsed,
+      durationMs: Date.now() - startTime,
+    };
+  } catch (error) {
+    return {
+      providerId: config.id,
+      providerName: config.name,
+      success: false,
+      error: {
+        type: 'api_error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      durationMs: Date.now() - startTime,
+    };
+  }
+}
+
+// Research platform using multiple providers with cross-verification
+export async function researchPlatformMultiProvider(
+  platformName: string
+): Promise<CrossVerifiedResearchResult> {
+  // Load enabled providers from database (with env var fallback)
+  const providers = await loadProviderConfigs();
+
+  if (providers.length === 0) {
+    return {
+      success: false,
+      error: {
+        type: 'api_error',
+        message: 'No AI providers configured. Add providers in admin settings or set ANTHROPIC_API_KEY.',
+      },
+    };
+  }
+
+  // Query all providers in parallel
+  const results = await Promise.all(
+    providers.map((config) => queryProvider(config, platformName))
+  );
+
+  // Check if at least one provider succeeded
+  const successfulResults = results.filter((r) => r.success);
+  if (successfulResults.length === 0) {
+    // Return the first error
+    const firstError = results[0]?.error || {
+      type: 'api_error' as const,
+      message: 'All providers failed',
+    };
+    return {
+      success: false,
+      error: firstError,
+    };
+  }
+
+  // Cross-verify results from all providers
+  const verifiedResponse = crossVerifyResults(results, platformName);
+
+  // Check if we have any events after verification
+  if (verifiedResponse.events.length === 0) {
+    return {
+      success: false,
+      error: {
+        type: 'validation_error',
+        message: 'No valid events found after cross-verification',
+      },
+    };
+  }
+
+  return {
+    success: true,
+    data: verifiedResponse,
+  };
 }

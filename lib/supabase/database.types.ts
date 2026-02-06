@@ -9,6 +9,48 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_providers: {
+        Row: {
+          id: string;
+          name: string;
+          base_url: string;
+          api_key_encrypted: string;
+          model: string;
+          enabled: boolean;
+          priority: number;
+          max_tokens: number;
+          temperature: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          base_url: string;
+          api_key_encrypted: string;
+          model: string;
+          enabled?: boolean;
+          priority?: number;
+          max_tokens?: number;
+          temperature?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          base_url?: string;
+          api_key_encrypted?: string;
+          model?: string;
+          enabled?: boolean;
+          priority?: number;
+          max_tokens?: number;
+          temperature?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       services: {
         Row: {
           id: string;
